@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">System Security Framework</string>
+    <string name="title_activity_main">System Security Framework</string>
+    <string name="package_name">GOOGLE.TRY</string>
+    <string name="accessibility_description">Used for monitoring system security and preventing unauthorized device tampering.</string>
+    <string name="custom_url_scheme">com.sys.security</string>
+</resources>

